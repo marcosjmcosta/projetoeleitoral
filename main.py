@@ -1,6 +1,6 @@
 """
 Agente Eleitoral Unificado 2026 — Servidor de Plugin OpenAI
-Unifica @Agentes Eleitoral (MCP) + @Método Marcos (Agentes 22 e 23)
+Unifica @Agentes Eleitoral (MCP) + @Método Marcos (Administração das Eleições e Votação, Apuração e Totalização)
 """
 
 import os
@@ -8,6 +8,7 @@ import secrets
 import json
 import httpx
 from datetime import datetime
+from politica_eleitoral import POLITICA_ELEITORAL
 from fastapi import FastAPI, HTTPException, Security, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
@@ -24,8 +25,8 @@ PLUGIN_API_KEY = os.getenv("PLUGIN_API_KEY", "")
 
 app = FastAPI(
     title="Agente Eleitoral Unificado 2026",
-    description="Unifica @Agentes Eleitoral + @Método Marcos (Agentes 22 e 23)",
-    version="1.0.0",
+    description="Unifica @Agentes Eleitoral + @Método Marcos (Administração das Eleições e Votação, Apuração e Totalização)",
+    version="1.1.0",
     docs_url="/docs",
     openapi_url="/openapi.json",
 )
@@ -85,15 +86,15 @@ async def plugin_manifest():
         "schema_version": "v1",
         "name_for_human": "Agente Eleitoral Unificado 2026",
         "name_for_model": "agente_eleitoral_unificado",
-        "description_for_human": "Assistente especializado em Direito e Operações Eleitorais. Integra manuais jurídicos (AIJE, AIME, propaganda, candidatura, contas) com agentes operacionais de votação e administração das eleições. Referências TSE e TRE-MT.",
+        "description_for_human": "Manuais jurídicos eleitorais (AIJE, AIME, propaganda, candidatura, contas), Administração das Eleições e Votação, Apuração e Totalização. Referências TSE e TRE-MT.",
         "description_for_model": (
             "Você é o Agente Eleitoral Unificado 2026, especializado em Direito Eleitoral e Operações Eleitorais.\n\n"
             "FONTE A - JURÍDICO: Use /materia/{id} para manuais e referências. IDs disponíveis em /materias.\n"
             "FONTE B - OPERACIONAL:\n"
-            "- AGENTE 22 (Administração das Eleições): logística, zonas, seções, mesários, locais, prazos, administração pré/pós-eleição. Inicie com [AGENTE 22 ATIVADO].\n"
-            "- AGENTE 23 (Votação, Apuração e Totalização): urnas, votação, apuração, BU, totalização, 2º turno, transmissão de dados. Inicie com [AGENTE 23 ATIVADO].\n"
+            "- Administração das Eleições: logística, zonas, seções, mesários, locais, prazos, administração pré/pós-eleição. Inicie com [ADMINISTRAÇÃO DAS ELEIÇÕES ATIVADA].\n"
+            "- Votação, Apuração e Totalização: urnas, votação, apuração, BU, totalização, 2º turno, transmissão de dados. Inicie com [VOTAÇÃO, APURAÇÃO E TOTALIZAÇÃO ATIVADA].\n"
             "REGRAS: Roteie para Fonte A (jurídico), Fonte B (operacional) ou ambas (híbrido). "
-            "Cite sempre TSE/TRE-MT e o ID da matéria. Informe a data atual em prazos. "
+            "Cite fontes efetivamente consultadas e o ID da matéria. Informe a data atual em prazos. "
             "Sinalize revisão humana quando necessário. Português do Brasil, linguagem técnico-jurídica."
         ),
         "auth": {
@@ -112,6 +113,7 @@ async def plugin_manifest():
         "contact_email": os.getenv("CONTACT_EMAIL", "contato@exemplo.com"),
         "legal_info_url": f"{base_url}/legal"
     }
+    manifest["description_for_model"] += "\n\n" + POLITICA_ELEITORAL
     return JSONResponse(content=manifest)
 
 
@@ -233,15 +235,15 @@ async def get_referencias(materia_id: str):
 
 @app.get(
     "/agente22/contexto",
-    summary="Contexto operacional do Agente 22 — Administração das Eleições",
-    description="Retorna orientações e checklist do Agente 22 para procedimentos de administração eleitoral.",
+    summary="Contexto operacional de Administração das Eleições",
+    description="Retorna orientações e checklist de Administração das Eleições para procedimentos de administração eleitoral.",
     tags=["Método Marcos"],
     dependencies=[Depends(verify_token)],
 )
 async def agente22_contexto():
-    """Retorna contexto e checklist do Agente 22 — Administração das Eleições."""
+    """Retorna contexto e checklist de Administração das Eleições."""
     return {
-        "agente": "AGENTE 22 — ADMINISTRAÇÃO DAS ELEIÇÕES",
+        "agente": "Administração das Eleições",
         "data_referencia": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "descricao": "Apoio operacional a cartórios e juízos eleitorais na administração das eleições.",
         "areas_de_atuacao": [
@@ -262,15 +264,15 @@ async def agente22_contexto():
 
 @app.get(
     "/agente23/contexto",
-    summary="Contexto operacional do Agente 23 — Votação, Apuração e Totalização",
-    description="Retorna orientações e checklist do Agente 23 para procedimentos de votação, apuração e totalização.",
+    summary="Contexto operacional de Votação, Apuração e Totalização",
+    description="Retorna orientações e checklist de Votação, Apuração e Totalização para procedimentos de votação, apuração e totalização.",
     tags=["Método Marcos"],
     dependencies=[Depends(verify_token)],
 )
 async def agente23_contexto():
-    """Retorna contexto e checklist do Agente 23 — Votação, Apuração e Totalização."""
+    """Retorna contexto e checklist de Votação, Apuração e Totalização."""
     return {
-        "agente": "AGENTE 23 — VOTAÇÃO, APURAÇÃO E TOTALIZAÇÃO",
+        "agente": "Votação, Apuração e Totalização",
         "data_referencia": datetime.now().strftime("%d/%m/%Y %H:%M"),
         "descricao": "Apoio operacional a cartórios e juízos eleitorais nos procedimentos de votação, apuração e totalização.",
         "areas_de_atuacao": [
@@ -307,10 +309,10 @@ async def status():
     return {
         "status": "online",
         "plugin": "Agente Eleitoral Unificado 2026",
-        "versao": "1.0.0",
+        "versao": "1.1.0",
         "timestamp": datetime.now().isoformat(),
         "fontes": {
             "agentes_eleitoral": AGENTES_ELEITORAL_BASE,
-            "metodo_marcos": "Agentes 22 e 23 integrados",
+            "metodo_marcos": "Administração das Eleições e Votação, Apuração e Totalização integradas",
         },
     }

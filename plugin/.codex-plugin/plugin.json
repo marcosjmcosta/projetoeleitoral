@@ -1,0 +1,19 @@
+{
+  "apps": "./.app.json",
+  "author": {
+    "name": "App developer"
+  },
+  "description": "Manuais jurídicos eleitorais (AIJE, AIME, propaganda, candidatura, contas) + Agentes 22 e 23 operacionais. Referências TSE e TRE-MT.",
+  "interface": {
+    "capabilities": [],
+    "category": "Other",
+    "defaultPrompt": null,
+    "developerName": "App developer",
+    "displayName": "Agente Eleitoral Unificado",
+    "longDescription": "Manuais jurídicos eleitorais (AIJE, AIME, propaganda, candidatura, contas) + Agentes 22 e 23 operacionais. Referências TSE e TRE-MT.",
+    "shortDescription": "Manuais jurídicos eleitorais (AIJE, AIME, propaganda, candidatura, contas) + Agentes 22 e 23 operacionais. Referências TSE e TRE-MT."
+  },
+  "name": "dev-6ad6895e3d948191bfd2ef50978e6d6c",
+  "version": "1.1.0",
+  "skills": "./skills/"
+}
