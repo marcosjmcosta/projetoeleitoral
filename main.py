@@ -4,6 +4,7 @@ Unifica @Agentes Eleitoral (MCP) + @Método Marcos (Agentes 22 e 23)
 """
 
 import os
+import secrets
 import json
 import httpx
 from datetime import datetime
@@ -19,7 +20,7 @@ AGENTES_ELEITORAL_TOKEN = os.getenv("AGENTES_ELEITORAL_TOKEN", "")
 AGENTES_ELEITORAL_ID    = os.getenv("AGENTES_ELEITORAL_CLIENT_ID", "gemini-eleitoral")
 
 # Chave de acesso ao seu plugin (defina no Render como variável de ambiente)
-PLUGIN_API_KEY = os.getenv("PLUGIN_API_KEY", "DEFINA_UMA_CHAVE_FORTE_AQUI")
+PLUGIN_API_KEY = os.getenv("PLUGIN_API_KEY", "")
 
 app = FastAPI(
     title="Agente Eleitoral Unificado 2026",
@@ -40,10 +41,17 @@ app.add_middleware(
 security = HTTPBearer(auto_error=False)
 
 def verify_token(credentials: HTTPAuthorizationCredentials = Security(security)):
-    if credentials and credentials.credentials == PLUGIN_API_KEY:
-        return True
-    # Permite acesso sem auth para os endpoints de manifesto
-    return None
+    if not PLUGIN_API_KEY or PLUGIN_API_KEY == "DEFINA_UMA_CHAVE_FORTE_AQUI":
+        raise HTTPException(status_code=503, detail="Chave da API não configurada")
+    if not credentials or not secrets.compare_digest(
+        credentials.credentials.encode("utf-8"), PLUGIN_API_KEY.encode("utf-8")
+    ):
+        raise HTTPException(
+            status_code=401,
+            detail="Credencial ausente ou inválida",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    return True
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -119,6 +127,7 @@ async def legal():
     summary="Lista todas as matérias disponíveis",
     description="Retorna a lista completa de IDs e títulos de matérias eleitorais disponíveis.",
     tags=["Agentes Eleitoral"],
+    dependencies=[Depends(verify_token)],
 )
 async def listar_materias():
     """Lista todos os IDs de matérias eleitorais disponíveis."""
@@ -203,6 +212,7 @@ async def listar_materias():
     summary="Obtém manual e FIRAC de uma matéria eleitoral",
     description="Retorna o conteúdo completo (manual, FIRAC, referências) de uma matéria eleitoral pelo seu ID.",
     tags=["Agentes Eleitoral"],
+    dependencies=[Depends(verify_token)],
 )
 async def get_materia(materia_id: str):
     """Consulta o manual e FIRAC de uma matéria no servidor @Agentes Eleitoral."""
@@ -214,6 +224,7 @@ async def get_materia(materia_id: str):
     summary="Obtém as referências legais de uma matéria",
     description="Retorna as referências (TSE, TRE, legislação) de uma matéria eleitoral.",
     tags=["Agentes Eleitoral"],
+    dependencies=[Depends(verify_token)],
 )
 async def get_referencias(materia_id: str):
     """Consulta as referências legais de uma matéria no servidor @Agentes Eleitoral."""
@@ -225,6 +236,7 @@ async def get_referencias(materia_id: str):
     summary="Contexto operacional do Agente 22 — Administração das Eleições",
     description="Retorna orientações e checklist do Agente 22 para procedimentos de administração eleitoral.",
     tags=["Método Marcos"],
+    dependencies=[Depends(verify_token)],
 )
 async def agente22_contexto():
     """Retorna contexto e checklist do Agente 22 — Administração das Eleições."""
@@ -253,6 +265,7 @@ async def agente22_contexto():
     summary="Contexto operacional do Agente 23 — Votação, Apuração e Totalização",
     description="Retorna orientações e checklist do Agente 23 para procedimentos de votação, apuração e totalização.",
     tags=["Método Marcos"],
+    dependencies=[Depends(verify_token)],
 )
 async def agente23_contexto():
     """Retorna contexto e checklist do Agente 23 — Votação, Apuração e Totalização."""
